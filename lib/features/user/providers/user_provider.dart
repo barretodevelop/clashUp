@@ -1,60 +1,54 @@
-﻿import 'package:flutter/material.dart'; // Added for IconData and UserModeEnum
+﻿import 'package:clashup/models/user_model.dart';
+import 'package:clashup/providers/auth_provider.dart';
+import 'package:clashup/services/firestore_service.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// An immutable class to hold user-specific economy data and user mode.
-class UserDataState {
-  final int coins;
-  final int xp;
-  final int gems;
-  final UserModeEnum userMode;
-
-  /// Initializes [UserDataState] with default values.
-  const UserDataState({
-    required this.coins,
-    required this.xp,
-    required this.gems,
-    required this.userMode,
-  });
-
-  /// Creates a copy of this [UserDataState] with the given fields replaced.
-  UserDataState copyWith({
-    int? coins,
-    int? xp,
-    int? gems,
-    UserModeEnum? userMode,
-  }) {
-    return UserDataState(
-      coins: coins ?? this.coins,
-      xp: xp ?? this.xp,
-      gems: gems ?? this.gems,
-      userMode: userMode ?? this.userMode,
-    );
-  }
-}
-
-/// A [Notifier] to hold and manage user-specific economy data and user mode.
-class UserNotifier extends Notifier<UserDataState> {
-  /// Initializes [UserNotifier] with default values for coins, XP, gems, and user mode.
+/// Manages modifications to the user's data.
+/// It now manages the full UserModel.
+class UserNotifier extends Notifier<UserModel?> {
+  /// Initializes [UserNotifier] and sets up listener for AuthState changes.
   @override
-  UserDataState build() {
-    return const UserDataState(
-      coins: 1200,
-      xp: 5000,
-      gems: 150,
-      userMode: UserModeEnum.alegre,
-    );
+  UserModel? build() {
+    // This provider now mirrors the user object from AuthProvider.
+    // It serves as the dedicated entry point for UI components to get user data
+    // and for them to request modifications to it.
+    return ref.watch(authProvider.select((state) => state.user));
+  }
+
+  /// Updates the user data in the provider's state.
+  /// This is useful for local updates (e.g., after onboarding) without re-fetching from Firestore.
+  void updateUser(UserModel updatedUser) {
+    // This method is for local updates. It should update the central source of truth.
+    ref.read(authProvider.notifier).updateUserWithOnboardingData(updatedUser);
   }
 
   /// Sets the user mode to a new value and updates the state.
-  void setUserMode(UserModeEnum mode) {
-    if (state.userMode != mode) {
-      state = state.copyWith(userMode: mode);
+  Future<void> setUserMode(UserModeEnum mode) async {
+    final user = state;
+    if (user != null && user.currentMood != mode.name) {
+      // 1. Optimistically update the UI by updating the central state
+      final updatedUser = user.copyWith(currentMood: () => mode.name);
+      ref.read(authProvider.notifier).updateUserWithOnboardingData(updatedUser);
+
+      // 2. Persist the change to Firestore
+      try {
+        await FirestoreService()
+            .updateUser(user.uid, {'currentMood': mode.name});
+        print('UserNotifier: User mood updated in Firestore to ${mode.name}');
+      } catch (e) {
+        // 3. If Firestore update fails, revert the optimistic update
+        // by refreshing the user data from the database.
+        print(
+            'UserNotifier: Failed to update mood in Firestore, reverting. Error: $e');
+        await ref.read(authProvider.notifier).refreshUser();
+      }
     }
   }
 }
 
 /// Provider for [UserNotifier].
-final userProvider = NotifierProvider<UserNotifier, UserDataState>(
+final userProvider = NotifierProvider<UserNotifier, UserModel?>(
   UserNotifier.new,
 );
 
@@ -91,5 +85,12 @@ extension UserModeExtension on UserModeEnum {
       case UserModeEnum.misterioso:
         return Icons.blur_on;
     }
+  }
+}
+
+// Helper to convert UserModeEnum to UserModel's currentMood string
+extension UserModeEnumToName on UserModeEnum {
+  String get name {
+    return toString().split('.').last;
   }
 }

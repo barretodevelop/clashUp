@@ -1,16 +1,17 @@
-﻿import 'package:aplicativo_social/features/user/providers/user_provider.dart';
+import 'package:clashup/features/user/providers/user_provider.dart';
+import 'package:clashup/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// A reusable widget to display the user's current mode and allow selection.
-class UserModeCard extends ConsumerStatefulWidget {
-  const UserModeCard({Key? key}) : super(key: key);
+class OptimizedUserModeCard extends ConsumerStatefulWidget {
+  const OptimizedUserModeCard({Key? key}) : super(key: key);
 
   @override
-  ConsumerState<UserModeCard> createState() => _UserModeCardState();
+  ConsumerState<OptimizedUserModeCard> createState() =>
+      _OptimizedUserModeCardState();
 }
 
-class _UserModeCardState extends ConsumerState<UserModeCard>
+class _OptimizedUserModeCardState extends ConsumerState<OptimizedUserModeCard>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
@@ -21,7 +22,7 @@ class _UserModeCardState extends ConsumerState<UserModeCard>
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 1200), // Animação mais longa
     );
     _animation = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
       parent: _animationController,
@@ -30,7 +31,10 @@ class _UserModeCardState extends ConsumerState<UserModeCard>
 
     _animationController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        // After animation, clear the animating state
+        // Atualiza o estado após a animação
+        if (_animatingUserMode != null) {
+          ref.read(userProvider.notifier).setUserMode(_animatingUserMode!);
+        }
         setState(() {
           _animatingUserMode = null;
         });
@@ -46,109 +50,241 @@ class _UserModeCardState extends ConsumerState<UserModeCard>
   }
 
   void _onModeSelected(UserModeEnum selectedMode) {
-    final UserDataState userData = ref.read(userProvider);
+    final UserModel? userModel = ref.read(userProvider);
 
-    // Only animate if a different mode is selected
-    if (userData.userMode != selectedMode) {
+    // If no user is loaded, or the selected mode is already the current mode, do nothing.
+    if (userModel == null) {
+      // Optionally, show a message that user data is not loaded
+      return;
+    }
+
+    // Convert currentMood string to UserModeEnum for comparison
+    final UserModeEnum? currentModeEnum = UserModeEnum.values
+        .firstWhereOrNull((e) => e.name == userModel.currentMood);
+
+    if (currentModeEnum != selectedMode) {
       setState(() {
         _animatingUserMode = selectedMode;
       });
-      _animationController.forward().then((_) {
-        // After the animation finishes, update the user mode in the state
-        ref.read(userProvider.notifier).setUserMode(selectedMode);
-      });
+      _animationController.forward();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final UserDataState userData = ref.watch(userProvider);
-    final UserModeEnum currentMode = userData.userMode;
+    final UserModel? userModel = ref.watch(userProvider);
 
-    return Card(
-      // margin: const EdgeInsets.symmetric(vertical: 16.0),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Stack(
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(3.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                // Horizontal list of modes
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: UserModeEnum.values.map<Widget>((mode) {
-                      final bool isSelected = (mode == currentMode);
-                      return GestureDetector(
-                        onTap: () => _onModeSelected(mode),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              Icon(
-                                mode.icon,
-                                size: isSelected
-                                    ? 48.0
-                                    : 32.0, // Larger if selected
-                                color: isSelected
-                                    ? Theme.of(context).primaryColor
-                                    : Theme.of(context).disabledColor,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                mode.displayName,
-                                style: TextStyle(
-                                  fontSize: isSelected ? 12.0 : 10.0,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  color: isSelected
-                                      ? Theme.of(context).primaryColor
-                                      : Theme.of(context).disabledColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
-            ),
+    // Default to a mode if userModel is null or currentMood is not set
+    final UserModeEnum currentMode = userModel != null &&
+            userModel.currentMood != null
+        ? UserModeEnum.values.firstWhere((e) => e.name == userModel.currentMood,
+            orElse: () => UserModeEnum.alegre)
+        : UserModeEnum.alegre; // Default mode if no user or mood
+
+    return Stack(
+      children: [
+        // Lista horizontal sem card wrapper
+        SizedBox(
+          height: 70, // Altura compacta
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            itemCount: UserModeEnum.values.length,
+            itemBuilder: (context, index) {
+              final mode = UserModeEnum.values[index];
+              final isSelected = currentMode == mode;
+
+              return _ColorfulModeOption(
+                mode: mode,
+                isSelected: isSelected,
+                onTap: () => _onModeSelected(mode),
+              );
+            },
           ),
-          // Animated icon overlay
-          if (_animatingUserMode != null)
-            AnimatedBuilder(
-              animation: _animation,
-              builder: (BuildContext context, Widget? child) {
-                return Center(
+        ),
+
+        // Animação do emoji grande subindo
+        if (_animatingUserMode != null)
+          AnimatedBuilder(
+            animation: _animation,
+            builder: (BuildContext context, Widget? child) {
+              return Positioned.fill(
+                child: Center(
                   child: Transform.translate(
-                    offset:
-                        Offset(0, -(_animation.value * 50)), // Move up by 50px
+                    offset: Offset(
+                        0, -(_animation.value * 80)), // Sobe mais alto (80px)
                     child: Opacity(
-                      opacity: 1.0 - _animation.value, // Fade out
+                      opacity:
+                          1.0 - _animation.value, // Desaparece gradualmente
                       child: Transform.scale(
                         scale: 1.0 +
-                            (_animation.value * 0.3), // Grow up to 30% larger
+                            (_animation.value *
+                                1.5), // Cresce muito mais (150%)
                         child: Icon(
                           _animatingUserMode!.icon,
-                          size: 48.0, // Fixed size for the icon itself
-                          color: Theme.of(context).primaryColor,
+                          size: 60, // Emoji bem maior
+                          color: _getModeColor(_animatingUserMode!),
                         ),
                       ),
                     ),
                   ),
-                );
-              },
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  // Cores distintas para cada modo
+  Color _getModeColor(UserModeEnum mode) {
+    switch (mode) {
+      case UserModeEnum.triste:
+        return const Color(0xFF2196F3); // Azul
+      case UserModeEnum.alegre:
+        return const Color(0xFFFFC107); // Amarelo
+      case UserModeEnum.aventureiro:
+        return const Color(0xFF4CAF50); // Verde
+      case UserModeEnum.calmo:
+        return const Color(0xFF9C27B0); // Roxo
+      case UserModeEnum.misterioso:
+        return const Color(0xFF607D8B); // Azul acinzentado
+    }
+  }
+}
+
+// Helper extension to find enum by name (similar to firstWhereOrNull)
+extension IterableExtension<T> on Iterable<T> {
+  T? firstWhereOrNull(bool Function(T element) test) {
+    for (var element in this) {
+      if (test(element)) return element;
+    }
+    return null;
+  }
+}
+
+class _ColorfulModeOption extends StatefulWidget {
+  final UserModeEnum mode;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ColorfulModeOption({
+    required this.mode,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  State<_ColorfulModeOption> createState() => _ColorfulModeOptionState();
+}
+
+class _ColorfulModeOptionState extends State<_ColorfulModeOption>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _hoverController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _hoverController = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _hoverController, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _hoverController.dispose();
+    super.dispose();
+  }
+
+  // Cores distintas para cada modo
+  Color _getModeColor(UserModeEnum mode) {
+    switch (mode) {
+      case UserModeEnum.triste:
+        return const Color(0xFF2196F3); // Azul
+      case UserModeEnum.alegre:
+        return const Color(0xFFFFC107); // Amarelo
+      case UserModeEnum.aventureiro:
+        return const Color(0xFF4CAF50); // Verde
+      case UserModeEnum.calmo:
+        return const Color(0xFF9C27B0); // Roxo
+      case UserModeEnum.misterioso:
+        return const Color(0xFF607D8B); // Azul acinzentado
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final modeColor = _getModeColor(widget.mode);
+
+    return AnimatedBuilder(
+      animation: _scaleAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 6),
+            child: GestureDetector(
+              onTap: widget.onTap,
+              onTapDown: (_) => _hoverController.forward(),
+              onTapUp: (_) => _hoverController.reverse(),
+              onTapCancel: () => _hoverController.reverse(),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: widget.isSelected
+                      ? modeColor
+                      : modeColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: widget.isSelected
+                      ? Border.all(color: modeColor, width: 2)
+                      : Border.all(color: modeColor.withOpacity(0.3), width: 1),
+                  boxShadow: widget.isSelected
+                      ? [
+                          BoxShadow(
+                            color: modeColor.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      widget.mode.icon,
+                      size: widget.isSelected ? 26 : 22,
+                      color: widget.isSelected ? Colors.white : modeColor,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.mode.displayName,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 9,
+                        fontWeight: widget.isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: widget.isSelected ? Colors.white : modeColor,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
             ),
-        ],
-      ),
+          ),
+        );
+      },
     );
   }
 }

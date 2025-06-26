@@ -1,18 +1,18 @@
-﻿import 'package:aplicativo_social/core/providers/theme_provider.dart';
-import 'package:aplicativo_social/features/home/presentation/widgets/custom_app_bar.dart';
-import 'package:aplicativo_social/features/home/presentation/widgets/home_content.dart';
-import 'package:flutter/material.dart';
+﻿import 'package:clashup/features/home/presentation/widgets/custom_app_bar.dart';
+import 'package:clashup/features/home/presentation/widgets/home_content.dart'; // Ou o otimizado
+import 'package:clashup/features/home/presentation/widgets/settings_bottom_sheet.dart';
+import 'package:flutter/material.dart'; // Moved import to avoid conflict
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _selectedIndex = 0; // Represents the actual index in _pages
+  int _selectedIndex = 0;
 
   late final List<Widget> _pages;
 
@@ -20,15 +20,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     _pages = <Widget>[
-      HomeContent(onNavigateToTab: _navigateToTab),
-      const Center(child: Text('Radar de Almas')), // Index 1
-      const Center(child: Text('Amigos')), // Index 2
-      const Center(child: Text('Comunidades')), // Index 3
-      const Center(child: Text('Desafios')), // Index 4
+      HomeContent(
+          onNavigateToTab: _navigateToTab), // Ou use OptimizedHomeContent
+      const Center(child: Text('Radar de Almas')),
+      const Center(child: Text('Amigos')),
+      const Center(child: Text('Comunidades')),
+      const Center(child: Text('Desafios')),
     ];
   }
 
-  /// Maps the BottomNavigationBar's index to the actual page index.
   void _onItemTapped(int navBarIndex) {
     int pageIndex;
     if (navBarIndex == 0) {
@@ -47,14 +47,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
-  /// Navigates to a specific page index directly. Used by HomeContent and FAB.
   void _navigateToTab(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
-  /// Maps the actual page index to the BottomNavigationBar's index for highlighting.
   int _getBottomNavIndex(int selectedPageIndex) {
     if (selectedPageIndex == 0) {
       return 0; // Home
@@ -68,53 +66,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return 0; // If Radar (index 1) or invalid index, highlight Home
   }
 
-  void _showThemeSelectionDialog() {
-    showDialog<void>(
+  void _showSettingsBottomSheet() {
+    showModalBottomSheet<void>(
       context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Selecionar Tema'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.light_mode),
-                title: const Text('Claro'),
-                onTap: () {
-                  ref.read(appThemeProvider.notifier).setTheme(ThemeMode.light);
-                  Navigator.of(dialogContext).pop();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.dark_mode),
-                title: const Text('Escuro'),
-                onTap: () {
-                  ref.read(appThemeProvider.notifier).setTheme(ThemeMode.dark);
-                  Navigator.of(dialogContext).pop();
-                },
-              ),
-            ],
-          ),
-        );
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return const SettingsBottomSheet();
       },
     );
   }
 
   Widget _buildRadarFab() {
+    final theme = Theme.of(context);
+
     return FloatingActionButton(
       onPressed: () {
         _navigateToTab(1); // Navigate to Radar tab (index 1)
       },
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(
-          16.0,
-        ), // Square with rounded corners
+        borderRadius: BorderRadius.circular(16.0),
       ),
-      backgroundColor: Theme.of(context).primaryColor,
+      backgroundColor: theme.colorScheme.primary,
+      foregroundColor: theme.colorScheme.onPrimary,
       child: const Icon(
         Icons.radar,
-        color: Colors.white,
-        size: 30, // Make the icon a bit larger
+        size: 28,
       ),
     );
   }
@@ -123,11 +100,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        onNotificationsPressed: () {}, // Handle notifications
+        // Use o novo AppBar
+        onNotificationsPressed: () {
+          // Handle notifications
+        },
         onPersonPressed: () {
           // Navigate to profile
         },
-        onSettingsPressed: _showThemeSelectionDialog,
+        onSettingsPressed: _showSettingsBottomSheet,
       ),
       body: _pages[_selectedIndex],
       floatingActionButton: _buildRadarFab(),

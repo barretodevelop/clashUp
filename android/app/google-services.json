@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1000618431420",
+    "project_id": "clashup-b7a84",
+    "storage_bucket": "clashup-b7a84.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1000618431420:android:c8c0ac04d68463c5bd91b9",
+        "android_client_info": {
+          "package_name": "com.barreto.dev.clashup"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC6ebcY4d1EwPt1pIxVTMYCJTXa4Chu2jM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
