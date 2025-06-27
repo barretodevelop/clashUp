@@ -1,4 +1,4 @@
-//lib/models/user_model.dart - Versão Corrigida com Onboarding (Atualizada conforme seu código)
+//lib/models/user_model.dart - Versão Atualizada com Sistema de Comunidades
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart'; // For mapEquals
 
@@ -37,6 +37,18 @@ class UserModel {
   final int? loginStreak;
   final Map<String, bool> clashupedFeatures;
 
+  // ✅ NOVOS CAMPOS PARA SISTEMA DE COMUNIDADES
+  final List<String> joinedCommunities; // IDs das comunidades que participa
+  final List<String> ownedCommunities; // IDs das comunidades que criou
+  final List<String> moderatedCommunities; // IDs das comunidades que modera
+  final Map<String, DateTime>
+      communityActivity; // Última atividade por comunidade
+  final int communityPostsCount; // Total de posts em comunidades
+  final int communityXpEarned; // XP ganho especificamente em comunidades
+  final int communityCoinsEarned; // Coins ganhas especificamente em comunidades
+  final Map<String, int>
+      communityBadges; // Badges conquistadas {badgeId: quantity}
+
   const UserModel({
     required this.uid,
     required this.username,
@@ -66,6 +78,15 @@ class UserModel {
     this.lastLoginDate,
     this.loginStreak,
     this.clashupedFeatures = const {}, // Default to an empty map
+    // ✅ NOVOS CAMPOS DE COMUNIDADES COM DEFAULTS
+    this.joinedCommunities = const [],
+    this.ownedCommunities = const [],
+    this.moderatedCommunities = const [],
+    this.communityActivity = const {},
+    this.communityPostsCount = 0,
+    this.communityXpEarned = 0,
+    this.communityCoinsEarned = 0,
+    this.communityBadges = const {},
   });
 
   // ✅ GETTER PARA VERIFICAR SE PRECISA DE ONBOARDING
@@ -87,6 +108,24 @@ class UserModel {
     if (birthDate == null) return null;
     return DateTime.now().difference(birthDate!).inDays ~/ 365;
   }
+
+  // ✅ NOVOS GETTERS PARA COMUNIDADES
+  bool get isActiveInCommunities => joinedCommunities.isNotEmpty;
+  bool get isCommunityOwner => ownedCommunities.isNotEmpty;
+  bool get isCommunityModerator => moderatedCommunities.isNotEmpty;
+  int get totalCommunitiesJoined => joinedCommunities.length;
+  int get totalCommunitiesOwned => ownedCommunities.length;
+
+  // Verificar se é membro de uma comunidade específica
+  bool isMemberOf(String communityId) =>
+      joinedCommunities.contains(communityId);
+
+  // Verificar se é dono de uma comunidade específica
+  bool isOwnerOf(String communityId) => ownedCommunities.contains(communityId);
+
+  // Verificar se é moderador de uma comunidade específica
+  bool isModeratorOf(String communityId) =>
+      moderatedCommunities.contains(communityId);
 
   /// Cria uma instância a partir de um Map (ex: vindo de JSON ou Firebase)
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -129,6 +168,26 @@ class UserModel {
       clashupedFeatures: Map<String, bool>.from(
         json['clashupedFeatures'] as Map? ?? {},
       ),
+
+      // ✅ NOVOS CAMPOS DE COMUNIDADES
+      joinedCommunities: List<String>.from(json['joinedCommunities'] ?? []),
+      ownedCommunities: List<String>.from(json['ownedCommunities'] ?? []),
+      moderatedCommunities:
+          List<String>.from(json['moderatedCommunities'] ?? []),
+      communityActivity: (json['communityActivity'] as Map?)?.map(
+            (key, value) => MapEntry(
+              key as String,
+              value is Timestamp
+                  ? value.toDate()
+                  : DateTime.tryParse(value.toString()) ?? DateTime.now(),
+            ),
+          ) ??
+          {},
+      communityPostsCount: json['communityPostsCount'] as int? ?? 0,
+      communityXpEarned: json['communityXpEarned'] as int? ?? 0,
+      communityCoinsEarned: json['communityCoinsEarned'] as int? ?? 0,
+      communityBadges:
+          Map<String, int>.from(json['communityBadges'] as Map? ?? {}),
     );
   }
 
@@ -163,6 +222,18 @@ class UserModel {
       'onboardingCompletedAt': onboardingCompletedAt?.toIso8601String(),
       'lastLoginDate': lastLoginDate?.toIso8601String(),
       'loginStreak': loginStreak,
+
+      // ✅ NOVOS CAMPOS DE COMUNIDADES
+      'joinedCommunities': joinedCommunities,
+      'ownedCommunities': ownedCommunities,
+      'moderatedCommunities': moderatedCommunities,
+      'communityActivity': communityActivity.map(
+        (key, value) => MapEntry(key, value.toIso8601String()),
+      ),
+      'communityPostsCount': communityPostsCount,
+      'communityXpEarned': communityXpEarned,
+      'communityCoinsEarned': communityCoinsEarned,
+      'communityBadges': communityBadges,
     };
     // clashupedFeatures will be handled by copyWith or direct update in Firestore
   }
@@ -196,6 +267,15 @@ class UserModel {
     DateTime? lastLoginDate,
     int? loginStreak,
     Map<String, bool>? clashupedFeatures,
+    // ✅ NOVOS PARÂMETROS DE COMUNIDADES
+    List<String>? joinedCommunities,
+    List<String>? ownedCommunities,
+    List<String>? moderatedCommunities,
+    Map<String, DateTime>? communityActivity,
+    int? communityPostsCount,
+    int? communityXpEarned,
+    int? communityCoinsEarned,
+    Map<String, int>? communityBadges,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -227,12 +307,21 @@ class UserModel {
       loginStreak: loginStreak ?? this.loginStreak,
       clashupedFeatures:
           clashupedFeatures ?? Map<String, bool>.from(this.clashupedFeatures),
+      // ✅ NOVOS CAMPOS DE COMUNIDADES
+      joinedCommunities: joinedCommunities ?? this.joinedCommunities,
+      ownedCommunities: ownedCommunities ?? this.ownedCommunities,
+      moderatedCommunities: moderatedCommunities ?? this.moderatedCommunities,
+      communityActivity: communityActivity ?? this.communityActivity,
+      communityPostsCount: communityPostsCount ?? this.communityPostsCount,
+      communityXpEarned: communityXpEarned ?? this.communityXpEarned,
+      communityCoinsEarned: communityCoinsEarned ?? this.communityCoinsEarned,
+      communityBadges: communityBadges ?? this.communityBadges,
     );
   }
 
   @override
   String toString() {
-    return 'UserModel(uid: $uid, username: $username, currentMood: $currentMood, onboardingCompleted: $onboardingCompleted, needsOnboarding: $needsOnboarding)';
+    return 'UserModel(uid: $uid, username: $username, currentMood: $currentMood, onboardingCompleted: $onboardingCompleted, needsOnboarding: $needsOnboarding, totalCommunitiesJoined: $totalCommunitiesJoined)';
   }
 
   @override
@@ -264,9 +353,18 @@ class UserModel {
         other.connectionLevel == connectionLevel &&
         other.onboardingCompleted == onboardingCompleted &&
         other.onboardingCompletedAt == onboardingCompletedAt &&
-        other.lastLoginDate == lastLoginDate && // Already included, good.
-        other.loginStreak == loginStreak && // Already included, good.
-        mapEquals(other.clashupedFeatures, clashupedFeatures);
+        other.lastLoginDate == lastLoginDate &&
+        other.loginStreak == loginStreak &&
+        mapEquals(other.clashupedFeatures, clashupedFeatures) &&
+        // ✅ NOVOS CAMPOS DE COMUNIDADES
+        listEquals(other.joinedCommunities, joinedCommunities) &&
+        listEquals(other.ownedCommunities, ownedCommunities) &&
+        listEquals(other.moderatedCommunities, moderatedCommunities) &&
+        mapEquals(other.communityActivity, communityActivity) &&
+        other.communityPostsCount == communityPostsCount &&
+        other.communityXpEarned == communityXpEarned &&
+        other.communityCoinsEarned == communityCoinsEarned &&
+        mapEquals(other.communityBadges, communityBadges);
   }
 
   @override
@@ -299,6 +397,15 @@ class UserModel {
       lastLoginDate,
       loginStreak,
       clashupedFeatures,
+      // ✅ NOVOS CAMPOS DE COMUNIDADES
+      joinedCommunities,
+      ownedCommunities,
+      moderatedCommunities,
+      communityActivity,
+      communityPostsCount,
+      communityXpEarned,
+      communityCoinsEarned,
+      communityBadges,
     ]);
   }
 
@@ -338,6 +445,15 @@ class UserModel {
       lastLoginDate: null, // Provide initial null value
       loginStreak: 0, // Provide initial 0 value
       clashupedFeatures: {}, // Initialize with empty map
+      // ✅ CAMPOS DE COMUNIDADES INICIAIS
+      joinedCommunities: [],
+      ownedCommunities: [],
+      moderatedCommunities: [],
+      communityActivity: {},
+      communityPostsCount: 0,
+      communityXpEarned: 0,
+      communityCoinsEarned: 0,
+      communityBadges: {},
     );
   }
 }

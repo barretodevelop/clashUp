@@ -62,7 +62,7 @@ class _HomeContentState extends ConsumerState<HomeContent>
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20.0),
+      padding: const EdgeInsets.all(12.0),
       child: Column(
         children: [
           // Welcome Section com animação fade
@@ -82,6 +82,13 @@ class _HomeContentState extends ConsumerState<HomeContent>
 
           // const SizedBox(height: 40),
 
+          _QuickDepoimentsGrid(
+            onNavigateToTab: widget.onNavigateToTab,
+            slideAnimation: _slideAnimation,
+          ),
+
+          const SizedBox(height: 40),
+
           // Quick Actions com staggered animation
           _QuickActionsGrid(
             onNavigateToTab: widget.onNavigateToTab,
@@ -89,6 +96,59 @@ class _HomeContentState extends ConsumerState<HomeContent>
           ),
         ],
       ),
+    );
+  }
+}
+
+class _QuickDepoimentsGrid extends StatelessWidget {
+  final ValueChanged<int> onNavigateToTab;
+  final Animation<Offset> slideAnimation;
+
+  const _QuickDepoimentsGrid({
+    required this.onNavigateToTab,
+    required this.slideAnimation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final actions = [
+      ListTile(
+        dense: true,
+        leading: const Icon(Icons.message_outlined),
+        title: Text(
+          'De: João da Silva',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+        subtitle: Text(
+          'Aqui sta um cara amigo parceiro e brincalhao que DEus te ilumine meu irmao',
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(fontWeight: FontWeight.w600, fontSize: 10),
+        ),
+        trailing: Icon(
+          Icons.check_rounded,
+          color: Colors.green[900],
+        ),
+        onTap: () => onNavigateToTab(1),
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Seus Depoimentos',
+          style: Theme.of(context)
+              .textTheme
+              .titleLarge
+              ?.copyWith(fontWeight: FontWeight.w600, fontSize: 16),
+        ),
+        const SizedBox(height: 12),
+        ...actions.map((action) => action).toList(),
+      ],
     );
   }
 }
@@ -107,26 +167,14 @@ class _QuickActionsGrid extends StatelessWidget {
     final actions = [
       QuickAccessButton(
         leadingIcon: Icons.radar,
-        text: 'Radar de Almas',
+        text: 'Conexões Reais',
         subtitle: 'Descubra conexões',
         onPressed: () => onNavigateToTab(1),
       ),
       QuickAccessButton(
         leadingIcon: Icons.radar,
-        text: 'Amigos',
-        subtitle: 'Suas conexões',
-        onPressed: () => onNavigateToTab(2),
-      ),
-      QuickAccessButton(
-        leadingIcon: Icons.radar,
-        text: 'Comunidades',
-        subtitle: 'Encontre grupos',
-        onPressed: () => onNavigateToTab(3),
-      ),
-      QuickAccessButton(
-        leadingIcon: Icons.radar,
-        text: 'Desafios',
-        subtitle: 'Teste habilidades',
+        text: 'Loja',
+        subtitle: 'Adquira itens valisos',
         onPressed: () => onNavigateToTab(4),
       ),
     ];
@@ -136,11 +184,12 @@ class _QuickActionsGrid extends StatelessWidget {
       children: [
         Text(
           'Acesso Rápido',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+          style: Theme.of(context)
+              .textTheme
+              .titleLarge
+              ?.copyWith(fontWeight: FontWeight.w600, fontSize: 16),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         ...actions
             .map((action) => _AnimatedActionCard(
                   action: action,
