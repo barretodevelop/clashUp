@@ -1,12 +1,14 @@
 import 'package:clashup/clashApp.dart';
 import 'package:clashup/core/utils/logger.dart';
 import 'package:clashup/firebase_options.dart';
+import 'package:clashup/providers/theme_provider.dart';
 import 'package:clashup/services/notification_service.dart'; // Import NotificationService
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Entry point da aplicação clashup
 void main() async {
@@ -22,6 +24,15 @@ Future<void> _initializeApp() async {
 
     WidgetsFlutterBinding.ensureInitialized();
     AppLogger.info('✅ Flutter binding inicializado');
+
+    // Carregar tema salvo
+    final prefs = await SharedPreferences.getInstance();
+    final themeString = prefs.getString(AppThemeNotifier.themeKey);
+    final initialThemeMode = switch (themeString) {
+      'dark' => ThemeMode.dark,
+      'system' => ThemeMode.system,
+      _ => ThemeMode.light,
+    };
 
     // Configurar orientação do dispositivo
     await SystemChrome.setPreferredOrientations([
@@ -85,6 +96,11 @@ Future<void> _initializeApp() async {
     runApp(
       ProviderScope(
         observers: kDebugMode ? [_ProviderLogger()] : [],
+        overrides: [
+          // Passa o tema inicial para o construtor do Notifier.
+          appThemeProvider
+              .overrideWith(() => AppThemeNotifier(initialThemeMode)),
+        ],
         child: const ClashUp(),
       ),
     );

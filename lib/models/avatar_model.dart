@@ -45,4 +45,43 @@ class AvatarModel {
 
   @override
   String toString() => 'AvatarModel(id: $id, emoji: $emoji, name: $name)';
+
+  AvatarModel copyWith({
+    String? id,
+    String? emoji,
+    String? name,
+    bool? isPremium,
+    int? cost,
+    String? currency,
+    String? category,
+  }) {
+    return AvatarModel(
+      id: id ?? this.id,
+      emoji: emoji ?? this.emoji,
+      name: name ?? this.name,
+      isPremium: isPremium ?? this.isPremium,
+      cost: cost ?? this.cost,
+      currency: currency ?? this.currency,
+      category: category ?? this.category,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is AvatarModel &&
+        other.id == id &&
+        other.emoji == emoji &&
+        other.name == name &&
+        other.isPremium == isPremium &&
+        other.cost == cost &&
+        other.currency == currency &&
+        other.category == category;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(id, emoji, name, isPremium, cost, currency, category);
+  }
 }

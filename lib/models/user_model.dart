@@ -16,6 +16,12 @@ class UserModel {
   final Map<String, dynamic> aiConfig;
   final String? currentMood; // Adicionado: Humor atual do usuário
 
+  // Estatísticas do perfil
+  final int messagesCount;
+  final int photosCount;
+  final int videosCount;
+  final int fansCount;
+
   // ✅ NOVOS CAMPOS PARA ONBOARDING
   final String? codinome; // Nome anônimo escolhido
   final String? avatarId; // ID do avatar selecionado
@@ -44,6 +50,10 @@ class UserModel {
     required this.createdAt,
     required this.aiConfig,
     this.currentMood,
+    this.messagesCount = 0,
+    this.photosCount = 0,
+    this.videosCount = 0,
+    this.fansCount = 0,
     // Novos campos com defaults seguros
     this.codinome,
     this.avatarId,
@@ -93,6 +103,10 @@ class UserModel {
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
       aiConfig: Map<String, dynamic>.from(json['aiConfig'] ?? {}),
       currentMood: json['currentMood'] as String?,
+      messagesCount: json['messagesCount'] as int? ?? 0,
+      photosCount: json['photosCount'] as int? ?? 0,
+      videosCount: json['videosCount'] as int? ?? 0,
+      fansCount: json['fansCount'] as int? ?? 0,
 
       // ✅ NOVOS CAMPOS COM FALLBACKS SEGUROS
       codinome: json['codinome'],
@@ -133,6 +147,10 @@ class UserModel {
       'createdAt': createdAt.toIso8601String(),
       'currentMood': currentMood,
       'aiConfig': aiConfig,
+      'messagesCount': messagesCount,
+      'photosCount': photosCount,
+      'videosCount': videosCount,
+      'fansCount': fansCount,
 
       // ✅ NOVOS CAMPOS
       'codinome': codinome,
@@ -163,6 +181,10 @@ class UserModel {
     DateTime? createdAt,
     ValueGetter<String?>? currentMood, // Usar ValueGetter para permitir null
     Map<String, dynamic>? aiConfig,
+    int? messagesCount,
+    int? photosCount,
+    int? videosCount,
+    int? fansCount,
     String? codinome,
     String? avatarId,
     DateTime? birthDate,
@@ -188,6 +210,10 @@ class UserModel {
       createdAt: createdAt ?? this.createdAt,
       aiConfig: aiConfig ?? this.aiConfig,
       currentMood: currentMood != null ? currentMood() : this.currentMood,
+      messagesCount: messagesCount ?? this.messagesCount,
+      photosCount: photosCount ?? this.photosCount,
+      videosCount: videosCount ?? this.videosCount,
+      fansCount: fansCount ?? this.fansCount,
       codinome: codinome ?? this.codinome,
       avatarId: avatarId ?? this.avatarId,
       birthDate: birthDate ?? this.birthDate,
@@ -226,6 +252,10 @@ class UserModel {
         other.createdAt == createdAt &&
         mapEquals(other.aiConfig, aiConfig) &&
         other.currentMood == currentMood &&
+        other.messagesCount == messagesCount &&
+        other.photosCount == photosCount &&
+        other.videosCount == videosCount &&
+        other.fansCount == fansCount &&
         other.codinome == codinome &&
         other.avatarId == avatarId &&
         other.birthDate == birthDate &&
@@ -254,6 +284,10 @@ class UserModel {
       createdAt,
       aiConfig,
       currentMood,
+      messagesCount,
+      photosCount,
+      videosCount,
+      fansCount,
       codinome,
       avatarId,
       birthDate,
@@ -288,6 +322,10 @@ class UserModel {
       createdAt: DateTime.now(),
       aiConfig: {'apiUrl': '', 'apiKey': '', 'enabled': false},
       currentMood: null, // Humor inicial nulo
+      messagesCount: 0,
+      photosCount: 0,
+      videosCount: 0,
+      fansCount: 0,
       // Campos de onboarding vazios/padrão
       codinome: '',
       avatarId: '',
@@ -302,12 +340,4 @@ class UserModel {
       clashupedFeatures: {}, // Initialize with empty map
     );
   }
-
-  get messagesCount => null;
-
-  get photosCount => null;
-
-  get videosCount => null;
-
-  get fansCount => null;
 }

@@ -395,7 +395,7 @@ class _WelcomeSection extends StatelessWidget {
 
   Widget _buildProfileStats(BuildContext context) {
     final theme = Theme.of(context);
-
+    final user = userModel; // Para evitar acesso repetido a widget.userModel
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       decoration: BoxDecoration(
@@ -408,17 +408,17 @@ class _WelcomeSection extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem(context, 'Recados', userModel?.messagesCount ?? 114,
+          _buildStatItem(context, 'Recados', user?.messagesCount ?? 0,
               Icons.message_outlined),
           _buildVerticalDivider(context),
-          _buildStatItem(context, 'Fotos', userModel?.photosCount ?? 0,
-              Icons.photo_outlined),
+          _buildStatItem(
+              context, 'Fotos', user?.photosCount ?? 0, Icons.photo_outlined),
           _buildVerticalDivider(context),
-          _buildStatItem(context, 'Vídeos', userModel?.videosCount ?? 5,
+          _buildStatItem(context, 'Vídeos', user?.videosCount ?? 0,
               Icons.videocam_outlined),
           _buildVerticalDivider(context),
-          _buildStatItem(context, 'Fãs', userModel?.fansCount ?? 15,
-              Icons.favorite_outline),
+          _buildStatItem(
+              context, 'Fãs', user?.fansCount ?? 0, Icons.favorite_outline),
         ],
       ),
     );
@@ -525,32 +525,27 @@ class _WelcomeSection extends StatelessWidget {
   }
 }
 
-class _ProfileAvatar extends StatefulWidget {
+class _ProfileAvatar extends ConsumerStatefulWidget {
   final UserModel? userModel;
   const _ProfileAvatar({super.key, this.userModel});
 
   @override
-  State<_ProfileAvatar> createState() => _ProfileAvatarState();
+  ConsumerState<_ProfileAvatar> createState() => _ProfileAvatarState();
 }
 
-class _ProfileAvatarState extends State<_ProfileAvatar> {
-  late String currentMood;
-
-  @override
-  void initState() {
-    super.initState();
-    currentMood = widget.userModel?.currentMood ?? '😊';
-  }
-
+class _ProfileAvatarState extends ConsumerState<_ProfileAvatar> {
   void _updateMood(String newMood) {
-    setState(() {
-      currentMood = newMood;
-    });
+    // A atualização do estado local não é mais necessária, pois o widget será
+    // reconstruído quando o estado do provider for atualizado.
+    ref.read(userProvider.notifier).updateUserMood(newMood);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Lê o humor diretamente do userModel do widget.
+    // O valor padrão '😊' é usado se o humor for nulo.
+    final String currentMood = widget.userModel?.currentMood ?? '😊';
     // Corrigindo o link do placeholder que estava entre colchetes
     final String avatarUrl =
         widget.userModel?.avatar ?? 'https://via.placeholder.com/150';
@@ -762,6 +757,7 @@ class _ProfileAvatarState extends State<_ProfileAvatar> {
   Widget _buildMoodOption(
       BuildContext context, String emoji, String label, bool status) {
     final theme = Theme.of(context);
+    final String currentMood = widget.userModel?.currentMood ?? '😊';
     final isSelected = currentMood == emoji;
 
     final Color effectiveBorderColor = status
@@ -872,484 +868,3 @@ class _ProfileAvatarState extends State<_ProfileAvatar> {
     );
   }
 }
-
-// class _WelcomeSection extends StatelessWidget {
-//   final UserModel? userModel;
-
-//   const _WelcomeSection({super.key, this.userModel});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final theme = Theme.of(context);
-
-//     return Container(
-//       width: double.infinity,
-//       padding: const EdgeInsets.all(24),
-//       decoration: BoxDecoration(
-//         color: theme.colorScheme.surface,
-//         gradient: LinearGradient(
-//           begin: Alignment.topCenter,
-//           end: Alignment.bottomCenter,
-//           colors: [
-//             theme.colorScheme.primary.withOpacity(0.1),
-//             theme.colorScheme.surface.withOpacity(0.1),
-//             theme.colorScheme.surfaceBright.withOpacity(0.1)
-//           ],
-//           stops: const [0.0, 0.5, 1.0],
-//         ),
-//         borderRadius: BorderRadius.circular(20),
-//         border: Border.all(
-//           color: theme.colorScheme.outline.withOpacity(0.2),
-//           width: 1,
-//         ),
-//       ),
-//       child: Column(
-//         children: [
-//           // Mensagem de boas-vindas
-//           Text(
-//             'Bem-vindo de volta!',
-//             style: theme.textTheme.headlineSmall?.copyWith(
-//               fontWeight: FontWeight.w600,
-//               color: theme.colorScheme.onSurface,
-//             ),
-//           ),
-//           const SizedBox(height: 8),
-//           // Avatar e Nome
-//           _ProfileAvatar(
-//               userModel:
-//                   userModel), // Não precisa mais de callbacks se o humor ficar interno
-//           const SizedBox(height: 12),
-
-//           Text(
-//             userModel?.displayName ?? 'Usuário',
-//             style: theme.textTheme.titleLarge?.copyWith(
-//               fontWeight: FontWeight.bold,
-//               color: theme.colorScheme.onSurface,
-//             ),
-//           ),
-
-//           if (userModel?.username != null) ...[
-//             const SizedBox(height: 4),
-//             Text(
-//               '@${userModel!.username}',
-//               style: theme.textTheme.bodyMedium?.copyWith(
-//                 color: theme.colorScheme.onSurface.withOpacity(0.6),
-//                 fontWeight: FontWeight.w500,
-//               ),
-//             ),
-//           ],
-
-//           const SizedBox(height: 20),
-
-//           // Estatísticas do Perfil
-//           _buildProfileStats(context),
-
-//           const SizedBox(height: 20),
-
-//           // Badges/Qualidades
-//           _buildUserBadges(context),
-
-//           const SizedBox(height: 20),
-
-//           Text(
-//             'Descubra novas conexões e viva experiências únicas',
-//             style: theme.textTheme.bodyMedium?.copyWith(
-//               color: theme.colorScheme.onSurface.withOpacity(0.7),
-//             ),
-//             textAlign: TextAlign.center,
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _buildProfileStats(BuildContext context) {
-//     final theme = Theme.of(context);
-
-//     return Container(
-//       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-//       decoration: BoxDecoration(
-//         color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-//         borderRadius: BorderRadius.circular(16),
-//         border: Border.all(
-//           color: theme.colorScheme.outline.withOpacity(0.1),
-//         ),
-//       ),
-//       child: Row(
-//         mainAxisAlignment: MainAxisAlignment.spaceAround,
-//         children: [
-//           _buildStatItem(context, 'Recados', userModel?.messagesCount ?? 114,
-//               Icons.message_outlined),
-//           _buildVerticalDivider(context),
-//           _buildStatItem(context, 'Fotos', userModel?.photosCount ?? 0,
-//               Icons.photo_outlined),
-//           _buildVerticalDivider(context),
-//           _buildStatItem(context, 'Vídeos', userModel?.videosCount ?? 5,
-//               Icons.videocam_outlined),
-//           _buildVerticalDivider(context),
-//           _buildStatItem(context, 'Fãs', userModel?.fansCount ?? 15,
-//               Icons.favorite_outline),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _buildStatItem(
-//       BuildContext context, String label, int count, IconData icon) {
-//     final theme = Theme.of(context);
-
-//     return Column(
-//       mainAxisSize: MainAxisSize.min,
-//       children: [
-//         Icon(
-//           icon,
-//           size: 20,
-//           color: theme.colorScheme.primary,
-//         ),
-//         const SizedBox(height: 4),
-//         Text(
-//           count.toString(),
-//           style: theme.textTheme.titleMedium?.copyWith(
-//             fontWeight: FontWeight.bold,
-//             color: theme.colorScheme.onSurface,
-//           ),
-//         ),
-//         Text(
-//           label,
-//           style: theme.textTheme.bodySmall?.copyWith(
-//             color: theme.colorScheme.onSurface.withOpacity(0.6),
-//             fontSize: 11,
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-
-//   Widget _buildVerticalDivider(BuildContext context) {
-//     final theme = Theme.of(context);
-//     return Container(
-//       height: 40,
-//       width: 1,
-//       color: theme.colorScheme.outline.withOpacity(0.2),
-//     );
-//   }
-
-//   Widget _buildUserBadges(BuildContext context) {
-//     final theme = Theme.of(context);
-
-//     return Row(
-//       children: [
-//         Expanded(
-//           child: _buildBadge(
-//               context, 'Confiável', '😊😊', theme.colorScheme.primary),
-//         ),
-//         const SizedBox(width: 8),
-//         Expanded(
-//           child:
-//               _buildBadge(context, 'Legal', '😎', theme.colorScheme.secondary),
-//         ),
-//         const SizedBox(width: 8),
-//         Expanded(
-//           child: _buildBadge(context, 'Sexy', '💖', Colors.pink),
-//         ),
-//       ],
-//     );
-//   }
-
-//   Widget _buildBadge(
-//       BuildContext context, String label, String emoji, Color color) {
-//     final theme = Theme.of(context);
-
-//     return Container(
-//       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-//       decoration: BoxDecoration(
-//         color: color.withOpacity(0.1),
-//         borderRadius: BorderRadius.circular(20),
-//         border: Border.all(
-//           color: color.withOpacity(0.3),
-//           width: 1,
-//         ),
-//       ),
-//       child: Column(
-//         mainAxisSize: MainAxisSize.min,
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: [
-//           Text(
-//             emoji,
-//             style: const TextStyle(fontSize: 16),
-//           ),
-//           const SizedBox(height: 4),
-//           Text(
-//             label,
-//             style: theme.textTheme.bodySmall?.copyWith(
-//               color: color,
-//               fontWeight: FontWeight.w600,
-//               fontSize: 11,
-//             ),
-//             overflow: TextOverflow.ellipsis,
-//             textAlign: TextAlign.center,
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// class _ProfileAvatar extends StatefulWidget {
-//   final UserModel? userModel;
-//   const _ProfileAvatar({super.key, this.userModel});
-
-//   @override
-//   State<_ProfileAvatar> createState() => _ProfileAvatarState();
-// }
-
-// class _ProfileAvatarState extends State<_ProfileAvatar> {
-//   late String currentMood;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     currentMood = widget.userModel?.currentMood ?? '😊';
-//   }
-
-//   void _updateMood(String newMood) {
-//     setState(() {
-//       currentMood = newMood;
-//     });
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final theme = Theme.of(context);
-//     final String avatarUrl = widget.userModel?.avatar ??
-//         '[https://via.placeholder.com/150](https://via.placeholder.com/150)';
-//     final String displayName = widget.userModel?.displayName ?? 'Anônimo';
-
-//     return GestureDetector(
-//       // GestureDetector envolve todo o Stack agora
-//       onTap: () => _showMoodBottomSheet(context),
-//       child: Stack(
-//         clipBehavior: Clip
-//             .none, // Permite que o emoji "saia" um pouco dos limites do avatar
-//         children: [
-//           // Container principal do avatar
-//           Container(
-//             width: 100,
-//             height: 100,
-//             decoration: BoxDecoration(
-//               shape: BoxShape.circle,
-//               color: theme.colorScheme.primary.withOpacity(0.1),
-//               boxShadow: [
-//                 BoxShadow(
-//                   color: theme.colorScheme.primary.withOpacity(0.3),
-//                   blurRadius: 20,
-//                   offset: const Offset(0, 8),
-//                 ),
-//               ],
-//             ),
-//             child: ClipRRect(
-//               borderRadius: BorderRadius.circular(50),
-//               child: Image.network(
-//                 avatarUrl,
-//                 fit: BoxFit.cover,
-//                 width: 100,
-//                 height: 100,
-//                 loadingBuilder: (BuildContext context, Widget child,
-//                     ImageChunkEvent? loadingProgress) {
-//                   if (loadingProgress == null) {
-//                     return child;
-//                   }
-//                   return Center(
-//                     child: CircularProgressIndicator(
-//                       value: loadingProgress.expectedTotalBytes != null
-//                           ? loadingProgress.cumulativeBytesLoaded /
-//                               loadingProgress.expectedTotalBytes!
-//                           : null,
-//                       color: theme.colorScheme.primary,
-//                     ),
-//                   );
-//                 },
-//                 errorBuilder: (BuildContext context, Object error,
-//                     StackTrace? stackTrace) {
-//                   return Container(
-//                     color: theme.colorScheme.surfaceVariant,
-//                     child: Center(
-//                       child: Text(
-//                         displayName.isNotEmpty
-//                             ? displayName[0].toUpperCase()
-//                             : '?',
-//                         style: theme.textTheme.headlineMedium
-//                             ?.copyWith(color: theme.colorScheme.onSurface),
-//                       ),
-//                     ),
-//                   );
-//                 },
-//               ),
-//             ),
-//           ),
-
-//           // Emoji de humor posicionado na parte inferior direita DENTRO do avatar
-//           Positioned(
-//             bottom: -10, // Ajuste esses valores conforme a sua preferência
-//             right:
-//                 -10, // Para que o emoji fique mais para fora ou para dentro do círculo
-//             child: Container(
-//               padding: const EdgeInsets.all(4),
-//               // decoration: BoxDecoration(
-//               //   shape: BoxShape.circle,
-//               //   color: theme.colorScheme.surface,
-//               //   boxShadow: [
-//               //     BoxShadow(
-//               //       color: Colors.black.withOpacity(0.2),
-//               //       blurRadius: 4,
-//               //       offset: const Offset(0, 1),
-//               //     ),
-//               //   ],
-//               // ),
-//               child: AnimatedSwitcher(
-//                 duration: const Duration(milliseconds: 300),
-//                 transitionBuilder: (Widget child, Animation<double> animation) {
-//                   return ScaleTransition(scale: animation, child: child);
-//                 },
-//                 child: Text(
-//                   currentMood,
-//                   key: ValueKey<String>(
-//                       currentMood), // Chave para AnimatedSwitcher
-//                   style: const TextStyle(fontSize: 32),
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   void _showMoodBottomSheet(BuildContext context) {
-//     final theme = Theme.of(context);
-
-//     showModalBottomSheet(
-//       context: context,
-//       backgroundColor: Colors.transparent,
-//       builder: (context) => Container(
-//         decoration: BoxDecoration(
-//           color: theme.colorScheme.surface,
-//           borderRadius: const BorderRadius.only(
-//             topLeft: Radius.circular(24),
-//             topRight: Radius.circular(24),
-//           ),
-//         ),
-//         padding: const EdgeInsets.all(24),
-//         child: Column(
-//           mainAxisSize: MainAxisSize.min,
-//           children: [
-//             Container(
-//               width: 50,
-//               height: 4,
-//               decoration: BoxDecoration(
-//                 color: theme.colorScheme.outline.withOpacity(0.3),
-//                 borderRadius: BorderRadius.circular(2),
-//               ),
-//             ),
-//             const SizedBox(height: 20),
-//             Text(
-//               'Como você está se sentindo?',
-//               style: theme.textTheme.titleLarge?.copyWith(
-//                 fontWeight: FontWeight.bold,
-//                 color: theme.colorScheme.onSurface,
-//               ),
-//             ),
-//             const SizedBox(height: 8),
-//             Text(
-//               'Escolha seu humor atual',
-//               style: theme.textTheme.bodyMedium?.copyWith(
-//                 color: theme.colorScheme.onSurface.withOpacity(0.7),
-//               ),
-//             ),
-//             const SizedBox(height: 24),
-//             GridView.count(
-//               shrinkWrap: true,
-//               crossAxisCount: 4,
-//               mainAxisSpacing: 16,
-//               crossAxisSpacing: 16,
-//               children: [
-//                 _buildMoodOption(context, '😊', 'Alegre', true),
-//                 _buildMoodOption(context, '😢', 'Triste', true),
-//                 _buildMoodOption(context, '😌', 'Calmo', true),
-//                 _buildMoodOption(context, '😴', 'Sonolento', true),
-//                 _buildMoodOption(context, '😎', 'Confiante', true),
-//                 _buildMoodOption(context, '🤔', 'Pensativo', true),
-//                 _buildMoodOption(context, '😍', 'Apaixonado', true),
-//                 _buildMoodOption(context, '🤩', 'Animado', true),
-//                 _buildMoodOption(context, '😤', 'Irritado', false),
-//                 _buildMoodOption(context, '🥳', 'Festeiro', true),
-//                 _buildMoodOption(context, '😇', 'Zen', false),
-//                 _buildMoodOption(context, '🤗', 'Carinhoso', false),
-//               ],
-//             ),
-//             const SizedBox(height: 20),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildMoodOption(
-//       BuildContext context, String emoji, String label, bool status) {
-//     final theme = Theme.of(context);
-//     final isSelected = currentMood == emoji;
-
-//     return GestureDetector(
-//       onTap: () {
-//         _updateMood(emoji);
-//         Navigator.pop(context);
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           SnackBar(
-//             content: Text('Humor atualizado para $label'),
-//             duration: const Duration(seconds: 2),
-//             backgroundColor: theme.colorScheme.primary,
-//           ),
-//         );
-//       },
-//       child: Container(
-//         decoration: BoxDecoration(
-//           color: isSelected
-//               ? theme.colorScheme.primary.withOpacity(0.2)
-//               : theme.colorScheme.surfaceVariant.withOpacity(0.5),
-//           borderRadius: BorderRadius.circular(16),
-//           border: Border.all(
-//             color: isSelected
-//                 ? theme.colorScheme.primary
-//                 : theme.colorScheme.outline.withOpacity(0.2),
-//             width: isSelected ? 2 : 1,
-//           ),
-//         ),
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: [
-//             Text(
-//               emoji,
-//               style: TextStyle(
-//                 fontSize: isSelected ? 26 : 24,
-//               ),
-//             ),
-//             const SizedBox(height: 4),
-//             Text(
-//               label,
-//               style: theme.textTheme.bodySmall?.copyWith(
-//                 fontSize: 10,
-//                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-//                 color: isSelected
-//                     ? theme.colorScheme.primary
-//                     : theme.colorScheme.onSurface.withOpacity(0.8),
-//               ),
-//               textAlign: TextAlign.center,
-//               maxLines: 1,
-//               overflow: TextOverflow.ellipsis,
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }

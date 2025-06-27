@@ -1,4 +1,5 @@
-﻿import 'package:clashup/models/user_model.dart';
+﻿import 'package:clashup/core/utils/logger.dart';
+import 'package:clashup/models/user_model.dart';
 import 'package:clashup/providers/auth_provider.dart';
 import 'package:clashup/services/firestore_service.dart';
 import 'package:flutter/material.dart';
@@ -41,6 +42,29 @@ class UserNotifier extends Notifier<UserModel?> {
         // by refreshing the user data from the database.
         print(
             'UserNotifier: Failed to update mood in Firestore, reverting. Error: $e');
+        await ref.read(authProvider.notifier).refreshUser();
+      }
+    }
+  }
+
+  /// Define o humor do usuário para um novo valor e atualiza o estado.
+  Future<void> updateUserMood(String mood) async {
+    final user = state;
+    if (user != null && user.currentMood != mood) {
+      // 1. Atualiza a UI de forma otimista, atualizando o estado central
+      final updatedUser = user.copyWith(currentMood: () => mood);
+      ref.read(authProvider.notifier).updateUserWithOnboardingData(updatedUser);
+
+      // 2. Persiste a alteração no Firestore
+      try {
+        await FirestoreService().updateUser(user.uid, {'currentMood': mood});
+        AppLogger.info(
+            'UserNotifier: Humor do usuário atualizado no Firestore para $mood');
+      } catch (e) {
+        // 3. Se a atualização do Firestore falhar, reverte a atualização otimista
+        // atualizando os dados do usuário a partir do banco de dados.
+        AppLogger.error(
+            'UserNotifier: Falha ao atualizar humor no Firestore, revertendo. Erro: $e');
         await ref.read(authProvider.notifier).refreshUser();
       }
     }
