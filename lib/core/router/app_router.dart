@@ -1,7 +1,7 @@
 // lib/core/router/app_router.dart - COMPLETO COM PROVIDER
 import 'package:clashup/core/utils/logger.dart';
 import 'package:clashup/features/auth/screens/login_screen.dart';
-import 'package:clashup/features/home/presentation/screens/home_screen.dart';
+import 'package:clashup/features/home/screens/home_screen.dart';
 import 'package:clashup/features/user/providers/user_provider.dart';
 import 'package:clashup/onboarding/onboarding_wrapper.dart';
 import 'package:clashup/providers/auth_provider.dart';

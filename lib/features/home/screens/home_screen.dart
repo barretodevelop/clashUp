@@ -1,6 +1,6 @@
-﻿import 'package:clashup/features/home/presentation/widgets/custom_app_bar.dart';
-import 'package:clashup/features/home/presentation/widgets/home_content.dart'; // Ou o otimizado
-import 'package:clashup/features/home/presentation/widgets/settings_bottom_sheet.dart';
+import 'package:clashup/features/home/widgets/custom_app_bar.dart';
+import 'package:clashup/features/home/widgets/home_content.dart'; // Ou o otimizado
+import 'package:clashup/features/home/widgets/settings_bottom_sheet.dart';
 import 'package:flutter/material.dart'; // Moved import to avoid conflict
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -100,7 +100,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        // Use o novo AppBar
         onNotificationsPressed: () {
           // Handle notifications
         },

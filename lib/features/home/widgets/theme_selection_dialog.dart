@@ -1,9 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/utils/app_strings.dart';
-import '../../../../providers/theme_provider.dart';
-import '../../../../shared/widgets/animated_button.dart';
+import '../../../core/utils/app_strings.dart';
+import '../../../providers/theme_provider.dart';
+import '../../../shared/widgets/animated_button.dart';
 
 class ThemeSelectionDialog extends ConsumerWidget {
   const ThemeSelectionDialog({super.key});

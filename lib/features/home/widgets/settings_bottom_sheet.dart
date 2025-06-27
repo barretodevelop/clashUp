@@ -1,6 +1,6 @@
 // lib/features/home/widgets/settings_bottom_sheet.dart
 import 'package:clashup/core/utils/logger.dart';
-import 'package:clashup/features/home/presentation/widgets/user_avatar.dart';
+import 'package:clashup/features/home/widgets/user_avatar.dart';
 import 'package:clashup/models/user_model.dart';
 import 'package:clashup/providers/auth_provider.dart';
 import 'package:clashup/providers/theme_provider.dart';

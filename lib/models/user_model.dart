@@ -302,4 +302,12 @@ class UserModel {
       clashupedFeatures: {}, // Initialize with empty map
     );
   }
+
+  get messagesCount => null;
+
+  get photosCount => null;
+
+  get videosCount => null;
+
+  get fansCount => null;
 }
